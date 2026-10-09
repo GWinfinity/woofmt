@@ -120,6 +120,23 @@ impl<'a> Formatter<'a> {
                         printer.indentation();
                         self.format_import_spec(child, source, printer)?;
                         printer.newline();
+                    } else if child.kind() == "import_spec_list" {
+                        // tree-sitter-go nests specs inside an import_spec_list
+                        // node; iterate its children too.
+                        let mut spec_cursor = child.walk();
+                        if spec_cursor.goto_first_child() {
+                            loop {
+                                let spec = spec_cursor.node();
+                                if spec.kind() == "import_spec" {
+                                    printer.indentation();
+                                    self.format_import_spec(spec, source, printer)?;
+                                    printer.newline();
+                                }
+                                if !spec_cursor.goto_next_sibling() {
+                                    break;
+                                }
+                            }
+                        }
                     }
                     if !cursor.goto_next_sibling() {
                         break;
@@ -225,6 +242,12 @@ impl<'a> Formatter<'a> {
                     }
                     "parameter_list" => {
                         self.format_parameter_list(child, source, printer)?;
+                    }
+                    // Method result type: needs a space after the parameter list.
+                    "type_identifier" | "qualified_type" | "pointer_type" | "slice_type"
+                    | "map_type" | "generic_type" | "type_parameter_list" => {
+                        printer.write_str(" ");
+                        self.write_node_text(child, source, printer);
                     }
                     "block" => {
                         printer.write_str(" ");

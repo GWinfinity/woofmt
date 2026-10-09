@@ -1,0 +1,77 @@
+name: CI
+
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build-test:
+    name: Build & Test (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
+
+      - name: Cache cargo registry & target
+        uses: Swatinem/rust-cache@v2
+
+      - name: Build (default features — must be single binary)
+        run: cargo build --locked
+
+      - name: Build with benchmark feature
+        run: cargo build --locked --features benchmark
+
+      - name: Run tests
+        run: cargo test --locked
+
+      - name: Clippy (report-only until pre-existing warnings are cleaned)
+        run: cargo clippy --locked 2>&1 | tee clippy.log
+        continue-on-error: true
+
+      - name: Clippy gate on new code
+        # Tighten progressively: this must NOT report warnings in
+        # src/fixer.rs, src/formatter/, src/rules/codestyle.rs.
+        if: runner.os == 'Linux'
+        run: |
+          if grep -E "fixer\.rs|formatter[\\\\/]printer\.rs|formatter[\\\\/]engine\.rs" clippy.log; then
+            echo "Clippy warnings in formatter/fixer code are not allowed."
+            exit 1
+          fi
+
+      - name: gofmt byte-level compatibility
+        # Installs Go and compares `woofmt fmt` output with gofmt on the
+        # corpus. Currently informational: failures are reported as
+        # annotations but do not fail the build until coverage reaches 100%.
+        if: runner.os == 'Linux'
+        uses: actions/setup-go@v5
+        with:
+          go-version: 'stable'
+
+      - name: Run gofmt compat check
+        if: runner.os == 'Linux'
+        run: |
+          chmod +x scripts/gofmt_compat.sh
+          ./scripts/gofmt_compat.sh ./target/debug/woofmt
+
+      - name: Verify single-binary install (P2 regression guard)
+        if: runner.os == 'Linux'
+        run: |
+          cargo install --path . --locked --root /tmp/woofmt-install-check
+          ls /tmp/woofmt-install-check/bin
+          test -f /tmp/woofmt-install-check/bin/woofmt
+          if [ -f /tmp/woofmt-install-check/bin/benchmark_256core ]; then
+            echo "REGRESSION: benchmark_256core leaked into default install"
+            exit 1
+          fi

@@ -118,6 +118,7 @@
 pub mod arena;
 pub mod cli;
 pub mod config;
+pub mod fixer;
 pub mod formatter;
 pub mod io; // Zero-copy I/O
 pub mod linter;
@@ -158,12 +159,7 @@ use std::path::Path;
 ///     message: "unused import".to_string(),
 ///     code: "E001".to_string(),
 ///     severity: Severity::Warning,
-///     fix: Some(Fix {
-///         description: "Remove unused import".to_string(),
-///         replacement: "".to_string(),
-///         start_byte: 100,
-///         end_byte: 120,
-///     }),
+///     fix: Some(Fix::safe("Remove unused import", "", 100, 120)),
 /// };
 /// ```
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -220,12 +216,7 @@ impl std::fmt::Display for Severity {
 /// ```
 /// use woofmt::Fix;
 ///
-/// let fix = Fix {
-///     description: "Remove trailing whitespace".to_string(),
-///     replacement: "".to_string(),
-///     start_byte: 50,
-///     end_byte: 55,
-/// };
+/// let fix = Fix::safe("Remove trailing whitespace", "", 50, 55);
 /// ```
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Fix {
@@ -237,6 +228,37 @@ pub struct Fix {
     pub start_byte: usize,
     /// End byte position in the source file
     pub end_byte: usize,
+    /// Whether the fix may change program semantics.
+    ///
+    /// Safe fixes (`false`) are purely mechanical (e.g. removing trailing
+    /// whitespace) and are applied by `woofmt check --fix` by default.
+    /// Unsafe fixes (`true`) can alter behavior and are only applied when
+    /// `--unsafe-fixes` is passed.
+    pub unsafe_fix: bool,
+}
+
+impl Fix {
+    /// Create a safe (purely mechanical) fix.
+    pub fn safe(description: impl Into<String>, replacement: impl Into<String>, start_byte: usize, end_byte: usize) -> Self {
+        Self {
+            description: description.into(),
+            replacement: replacement.into(),
+            start_byte,
+            end_byte,
+            unsafe_fix: false,
+        }
+    }
+
+    /// Create an unsafe fix (may change program semantics).
+    pub fn unsafe_(description: impl Into<String>, replacement: impl Into<String>, start_byte: usize, end_byte: usize) -> Self {
+        Self {
+            description: description.into(),
+            replacement: replacement.into(),
+            start_byte,
+            end_byte,
+            unsafe_fix: true,
+        }
+    }
 }
 
 /// Run the linter on a file or directory.

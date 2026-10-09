@@ -37,9 +37,10 @@ fn run() -> Result<()> {
         Some(Commands::Check {
             files,
             fix,
+            unsafe_fixes,
             exit_non_zero_on_fix,
         }) => {
-            run_check(files, *fix, *exit_non_zero_on_fix, &config, &cli)?;
+            run_check(files, *fix, *unsafe_fixes, *exit_non_zero_on_fix, &config, &cli)?;
         }
         Some(Commands::Format {
             files,
@@ -55,9 +56,12 @@ fn run() -> Result<()> {
             run_init(*strict)?;
         }
         None => {
-            // Default to check mode with files from CLI
-            let files = cli.get_files();
-            run_check(&files, false, false, &config, &cli)?;
+            // Default to check mode with files from CLI (default: cwd)
+            let mut files = cli.get_files();
+            if files.is_empty() {
+                files.push(std::path::PathBuf::from("."));
+            }
+            run_check(&files, false, false, false, &config, &cli)?;
         }
     }
 
@@ -67,6 +71,7 @@ fn run() -> Result<()> {
 fn run_check(
     files: &[std::path::PathBuf],
     fix: bool,
+    unsafe_fixes: bool,
     exit_non_zero_on_fix: bool,
     config: &Config,
     cli: &Cli,
@@ -114,7 +119,12 @@ fn run_check(
 
     // Apply fixes if requested
     if fix && !all_diagnostics.is_empty() {
-        apply_fixes_to_files(&all_diagnostics)?;
+        let report = woofmt::fixer::apply_fixes(&all_diagnostics, unsafe_fixes)?;
+        println!(
+            "{}: {}",
+            "Fixed".green().bold(),
+            woofmt::fixer::format_report(&report)
+        );
     }
 
     // Output diagnostics (skip if quiet mode)
@@ -305,10 +315,4 @@ fn output_github(diagnostics: &[woofmt::Diagnostic]) {
 
 fn _output_stats(_stats: &()) {
     // 统计功能暂时禁用
-}
-
-fn apply_fixes_to_files(_diagnostics: &[woofmt::Diagnostic]) -> Result<()> {
-    // 临时禁用自动修复功能
-    println!("自动修复功能暂时禁用");
-    Ok(())
 }
