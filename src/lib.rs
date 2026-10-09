@@ -239,7 +239,12 @@ pub struct Fix {
 
 impl Fix {
     /// Create a safe (purely mechanical) fix.
-    pub fn safe(description: impl Into<String>, replacement: impl Into<String>, start_byte: usize, end_byte: usize) -> Self {
+    pub fn safe(
+        description: impl Into<String>,
+        replacement: impl Into<String>,
+        start_byte: usize,
+        end_byte: usize,
+    ) -> Self {
         Self {
             description: description.into(),
             replacement: replacement.into(),
@@ -250,7 +255,12 @@ impl Fix {
     }
 
     /// Create an unsafe fix (may change program semantics).
-    pub fn unsafe_(description: impl Into<String>, replacement: impl Into<String>, start_byte: usize, end_byte: usize) -> Self {
+    pub fn unsafe_(
+        description: impl Into<String>,
+        replacement: impl Into<String>,
+        start_byte: usize,
+        end_byte: usize,
+    ) -> Self {
         Self {
             description: description.into(),
             replacement: replacement.into(),

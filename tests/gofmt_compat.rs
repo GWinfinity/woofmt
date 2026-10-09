@@ -54,7 +54,8 @@ fn corpus_files_parse_and_format_idempotently() {
         });
 
         assert_eq!(
-            once, twice,
+            once,
+            twice,
             "{}: formatter is NOT idempotent (format(format(x)) != format(x)). \
              CI `fmt --check` will oscillate on this file.",
             file.display()

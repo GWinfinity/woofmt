@@ -40,7 +40,14 @@ fn run() -> Result<()> {
             unsafe_fixes,
             exit_non_zero_on_fix,
         }) => {
-            run_check(files, *fix, *unsafe_fixes, *exit_non_zero_on_fix, &config, &cli)?;
+            run_check(
+                files,
+                *fix,
+                *unsafe_fixes,
+                *exit_non_zero_on_fix,
+                &config,
+                &cli,
+            )?;
         }
         Some(Commands::Format {
             files,

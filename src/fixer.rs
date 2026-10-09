@@ -83,11 +83,14 @@ pub fn apply_fixes(diagnostics: &[Diagnostic], unsafe_fixes: bool) -> Result<Fix
                 report.skipped_unsafe += 1;
                 continue;
             }
-            by_file.entry(diag.file_path.clone()).or_default().push(PendingFix {
-                start: fix.start_byte,
-                end: fix.end_byte,
-                replacement: fix.replacement.as_str(),
-            });
+            by_file
+                .entry(diag.file_path.clone())
+                .or_default()
+                .push(PendingFix {
+                    start: fix.start_byte,
+                    end: fix.end_byte,
+                    replacement: fix.replacement.as_str(),
+                });
         }
     }
 

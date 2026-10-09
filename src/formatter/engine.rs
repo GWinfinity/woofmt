@@ -244,8 +244,13 @@ impl<'a> Formatter<'a> {
                         self.format_parameter_list(child, source, printer)?;
                     }
                     // Method result type: needs a space after the parameter list.
-                    "type_identifier" | "qualified_type" | "pointer_type" | "slice_type"
-                    | "map_type" | "generic_type" | "type_parameter_list" => {
+                    "type_identifier"
+                    | "qualified_type"
+                    | "pointer_type"
+                    | "slice_type"
+                    | "map_type"
+                    | "generic_type"
+                    | "type_parameter_list" => {
                         printer.write_str(" ");
                         self.write_node_text(child, source, printer);
                     }
