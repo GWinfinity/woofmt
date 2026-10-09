@@ -276,7 +276,7 @@ impl PerfStats {
 
         // Sort by time descending
         let mut sorted = self.rule_times.clone();
-        sorted.sort_by(|a, b| b.time_us.cmp(&a.time_us));
+        sorted.sort_by_key(|s| std::cmp::Reverse(s.time_us));
 
         for stat in sorted.iter().take(10) {
             let time_ms = stat.time_us as f64 / 1000.0;

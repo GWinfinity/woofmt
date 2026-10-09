@@ -253,22 +253,20 @@ impl Rule for WrongImportOrder {
                                     ImportCategory::ThirdParty => {
                                         saw_third_party = true;
                                     }
-                                    ImportCategory::StandardLibrary => {
-                                        if saw_third_party {
-                                            diagnostics.push(Diagnostic {
-                                                code: "I003".to_string(),
-                                                message: format!(
-                                                    "标准库导入 '{}' 应在第三方库之前",
-                                                    import_path
-                                                ),
-                                                severity: self.default_severity(),
-                                                file_path: file_path.to_string(),
-                                                line: node.start_position().row + 1,
-                                                column: 1,
-                                                fix: None,
-                                            });
-                                            return diagnostics;
-                                        }
+                                    ImportCategory::StandardLibrary if saw_third_party => {
+                                        diagnostics.push(Diagnostic {
+                                            code: "I003".to_string(),
+                                            message: format!(
+                                                "标准库导入 '{}' 应在第三方库之前",
+                                                import_path
+                                            ),
+                                            severity: self.default_severity(),
+                                            file_path: file_path.to_string(),
+                                            line: node.start_position().row + 1,
+                                            column: 1,
+                                            fix: None,
+                                        });
+                                        return diagnostics;
                                     }
                                     _ => {}
                                 }

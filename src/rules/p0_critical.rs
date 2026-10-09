@@ -92,13 +92,11 @@ fn has_regex_error(pattern: &str) -> bool {
             }
             '[' if i == 0 || chars[i - 1] != '\\' => in_class = true,
             ']' => in_class = false,
-            '{' => {
-                // 检查量词语法 {n,m}
-                if !in_class && i + 1 < chars.len() {
-                    let rest: String = chars[i + 1..].iter().collect();
-                    if !rest.contains('}') {
-                        return true;
-                    }
+            // 检查量词语法 {n,m}
+            '{' if !in_class && i + 1 < chars.len() => {
+                let rest: String = chars[i + 1..].iter().collect();
+                if !rest.contains('}') {
+                    return true;
                 }
             }
             _ => {}

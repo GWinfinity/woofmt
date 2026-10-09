@@ -36,19 +36,8 @@ jobs:
       - name: Run tests
         run: cargo test --locked
 
-      - name: Clippy (report-only until pre-existing warnings are cleaned)
-        run: cargo clippy --locked 2>&1 | tee clippy.log
-        continue-on-error: true
-
-      - name: Clippy gate on new code
-        # Tighten progressively: this must NOT report warnings in
-        # src/fixer.rs, src/formatter/, src/rules/codestyle.rs.
-        if: runner.os == 'Linux'
-        run: |
-          if grep -E "fixer\.rs|formatter[\\\\/]printer\.rs|formatter[\\\\/]engine\.rs" clippy.log; then
-            echo "Clippy warnings in formatter/fixer code are not allowed."
-            exit 1
-          fi
+      - name: Clippy (deny warnings)
+        run: cargo clippy --locked -- -D warnings
 
       - name: gofmt byte-level compatibility
         # Installs Go and compares `woofmt fmt` output with gofmt on the

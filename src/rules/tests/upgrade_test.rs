@@ -1,14 +1,7 @@
 //! Tests for upgrade rules (Go 1.22/1.23/1.24/1.25)
 
-use crate::rules::{upgrade::*, Rule, RuleCategory, RulePriority};
+use crate::rules::{upgrade::*, Rule, RuleCategory};
 use crate::Severity;
-
-/// Helper to create a mock Node for testing
-fn mock_node(kind: &str) -> tree_sitter::Node {
-    // For unit tests, we'll use a simple approach
-    // In real tests, we would parse actual Go code
-    unimplemented!("Use integration tests with real Go code instead")
-}
 
 #[test]
 fn test_up1221_integer_range_metadata() {
