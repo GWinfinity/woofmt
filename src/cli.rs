@@ -12,8 +12,10 @@ pub struct Cli {
     #[command(subcommand)]
     pub command: Option<Commands>,
 
-    /// Files or directories to check
-    #[arg(value_name = "FILES", default_value = ".")]
+    /// Files or directories to check (default: current directory).
+    /// NOTE: no `default_value` here — with a default, clap would swallow
+    /// the subcommand name (`woofmt fmt ...`) as a file path.
+    #[arg(value_name = "FILES")]
     pub files: Vec<PathBuf>,
 
     /// Enable all lint rules
@@ -61,9 +63,13 @@ pub enum Commands {
         #[arg(value_name = "FILES", default_value = ".")]
         files: Vec<PathBuf>,
 
-        /// Apply auto-fixes where possible
+        /// Apply auto-fixes where possible (safe fixes only by default)
         #[arg(long)]
         fix: bool,
+
+        /// Also apply unsafe fixes (may change program semantics)
+        #[arg(long)]
+        unsafe_fixes: bool,
 
         /// Exit with error code if issues found
         #[arg(long)]
@@ -71,6 +77,7 @@ pub enum Commands {
     },
 
     /// Format Go source files
+    #[command(alias = "fmt")]
     Format {
         /// Files or directories to format
         #[arg(value_name = "FILES", default_value = ".")]

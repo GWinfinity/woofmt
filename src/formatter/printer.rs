@@ -34,7 +34,16 @@ impl<'a> Printer<'a> {
         self.last_char = Some(c);
     }
 
+    /// Emit a single line break.
+    ///
+    /// Collapses consecutive breaks: if the output already ends with `\n`,
+    /// this is a no-op. This makes the printer idempotent — re-formatting
+    /// formatted output never grows extra blank lines (use [`Self::blank_line`]
+    /// when a blank line is explicitly wanted).
     pub fn newline(&mut self) {
+        if self.output.ends_with('\n') {
+            return;
+        }
         self.output.push('\n');
         self.needs_indent = true;
         self.last_char = Some('\n');

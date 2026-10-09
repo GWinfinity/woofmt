@@ -17,6 +17,18 @@ rust-version = "1.80"
 name = "woofmt"
 path = "src/main.rs"
 
+# Benchmark harness is NOT part of the default install:
+# `cargo install woofmt` now ships exactly one binary.
+# Build it explicitly with: cargo build --features benchmark
+[[bin]]
+name = "benchmark_256core"
+path = "src/bin/benchmark_256core.rs"
+required-features = ["benchmark"]
+
+[features]
+default = []
+benchmark = []
+
 [dependencies]
 # CLI
 clap = { version = "4.5", features = ["derive", "cargo"] }

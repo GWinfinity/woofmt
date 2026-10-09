@@ -68,8 +68,17 @@ impl Rule for TrailingWhitespace {
     fn check(&self, _node: Node, source: &str, file_path: &str) -> Vec<Diagnostic> {
         let mut diagnostics = vec![];
 
-        for (line_num, line) in source.lines().enumerate() {
-            if line.ends_with(' ') || line.ends_with('\t') {
+        // Walk lines with byte offsets so we can emit precise safe fixes.
+        let mut offset = 0usize;
+        for (line_num, line) in source.split('\n').enumerate() {
+            let line_start = offset;
+            offset += line.len() + 1; // +1 for the '\n' (last line has none)
+
+            // Trailing whitespace: spaces/tabs (and a stray \r on CRLF files).
+            let trimmed = line.trim_end_matches([' ', '\t', '\r']);
+            if trimmed.len() < line.len() {
+                let fix_start = line_start + trimmed.len();
+                let fix_end = line_start + line.len();
                 diagnostics.push(Diagnostic {
                     code: "E115".to_string(),
                     message: "行尾存在空白字符".to_string(),
@@ -77,7 +86,12 @@ impl Rule for TrailingWhitespace {
                     file_path: file_path.to_string(),
                     line: line_num + 1,
                     column: line.len(),
-                    fix: None,
+                    fix: Some(crate::Fix::safe(
+                        "Remove trailing whitespace",
+                        "",
+                        fix_start,
+                        fix_end,
+                    )),
                 });
             }
         }

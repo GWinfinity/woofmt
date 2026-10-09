@@ -1,6 +1,6 @@
 # woofmt 🐕
 
-**⚡ Blazing-fast Go Linter & Formatter —— 10-100x faster than traditional tools**
+**⚡ Blazing-fast Go Linter & Formatter —— up to ~100x faster linting (self-reported benchmarks)**
 
 [![Crates.io](https://img.shields.io/crates/v/woofmt)](https://crates.io/crates/woofmt)
 [![Docs.rs](https://docs.rs/woofmt/badge.svg)](https://docs.rs/woofmt)
@@ -24,7 +24,11 @@ woofmt is an extremely fast Go code quality tool written in Rust, bringing real-
 | **1000 files project** | **150ms** | ~20s | ~5s | **30x** |
 | **5000 files large project** | **600ms** | ~60s | ~15s | **25x** |
 
-*Test environment: 12-core CPU, SSD*
+*Test environment: 12-core CPU, SSD. All numbers below are **self-reported** —
+the benchmark scripts live in [`benchmark/`](benchmark/) and third-party
+reproduction is welcome. Treat "up to ~100x" as the upper bound observed on
+lint-heavy workloads; formatting a file that gofmt already handles in
+milliseconds is not 100x of anything.*
 
 ### Why So Fast?
 
@@ -126,14 +130,14 @@ woofmt fmt --check
 ### Lint
 
 ```bash
-# Run all rules
-woofmt lint
+# Run all enabled rules (the `check` subcommand IS the linter)
+woofmt check
 
 # Run specific rules
-woofmt lint --rules "unused,shadow,error"
+woofmt check --select "E115,F401,C001"
 
-# Auto-fix issues
-woofmt lint --fix
+# Auto-fix safe issues (add --unsafe-fixes for semantic edits)
+woofmt check --fix
 ```
 
 ---
@@ -233,6 +237,11 @@ Benchmark 2: golangci-lint run
 Summary: woofmt is 188.8x faster
 ```
 
+> ⚠️ This is a **single-directory cold run**: golangci-lint pays its full
+> analyzer-startup cost while woofmt does one cache-warm parse pass. It is
+> the *best case*, not a typical speedup. See the table above for
+> per-scale numbers.
+
 ### Memory Usage
 
 | Tool | Cold Start Memory | Peak Memory |
@@ -242,6 +251,29 @@ Summary: woofmt is 188.8x faster
 | staticcheck | 80MB | 320MB |
 
 ---
+
+## 🧭 Status & Roadmap (honest version)
+
+woofmt is **pre-1.0, early stage**. What is real today:
+
+- ✅ Working `check` / `fmt` / `lint` CLI with parallel parsing (tree-sitter, Rayon)
+- ✅ Working safe auto-fixes (`woofmt check --fix` applies only mechanical
+  fixes such as E115 trailing whitespace; semantic edits require `--unsafe-fixes`)
+- ✅ Formatter idempotency regression tests (`tests/gofmt_compat.rs`) and a
+  gofmt byte-comparison harness (`scripts/gofmt_compat.sh`) enforced in CI
+- ✅ Single-binary install (`cargo install woofmt` ships exactly one binary)
+
+What is **not** ready (see [docs/RULES.md](docs/RULES.md) for details):
+
+- ❌ No type information (tree-sitter) — SA-series rules are syntax-level
+  approximations of staticcheck, not replacements
+- ❌ No cross-package `unused` analysis
+- ❌ gofmt byte-compatibility is structural, not yet 100% on all constructs
+- ❌ Rule set still small compared to golangci-lint's analyzer ecosystem
+
+**Recommended deployment**: use woofmt for real-time/editor feedback and
+cheap CI layers; keep golangci-lint/staticcheck for deep PR checks.
+See [docs/MIGRATION.md](docs/MIGRATION.md).
 
 ## 🤝 Contributing
 
